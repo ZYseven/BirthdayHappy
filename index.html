@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 关键修复：强制声明页面为浅色模式，防止浏览器系统级反色 -->
+    <meta name="color-scheme" content="light only">
     <title>祝JR.生日快乐！</title>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -11,25 +13,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Zcool+KuaiLe&display=swap" rel="stylesheet">
 
     <style>
+        /* --- 强制浅色方案，防止系统反色 --- */
+        :root {
+            color-scheme: light;
+        }
+
         /* --- 全局与背景 --- */
         body {
             font-family: 'Patrick Hand', 'Zcool KuaiLe', cursive;
             overflow: hidden;
             touch-action: none;
-            background-color: #FFFDE7;
+            background-color: #FFFDE7; /* 始终保持暖黄色背景 */
             background-image: radial-gradient(#FFEBEE 20%, transparent 20%), radial-gradient(#E3F2FD 20%, transparent 20%);
             background-size: 60px 60px;
             background-position: 0 0, 30px 30px;
-            transition: background-color 1.5s ease-in-out;
+            /* 移除了 transition: background-color，因为背景不再变黑 */
             -webkit-tap-highlight-color: transparent;
             -webkit-user-select: none;
             user-select: none;
         }
 
-        .dark-mode-bg {
-            background-color: #121212 !important;
-            background-image: none !important;
-        }
+        /* 删除了 .dark-mode-bg 类 */
 
         /* --- 背景装饰 --- */
         .bg-pet {
@@ -412,7 +416,8 @@
         }
     </style>
 </head>
-<body :class="{'dark-mode-bg': phase === 'dark'}">
+<!-- 移除了 class 绑定 -->
+<body>
 
 <div id="app" class="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center">
 
@@ -471,8 +476,8 @@
          :class="{'opacity-0 scale-90': fadeOutLight}">
         <!-- 第一页卡片微动 -->
         <div class="bg-white p-8 rounded-[30px] shadow-[8px_8px_0_#FFCCBC] border-4 border-[#FFAB91] mb-12 text-center transform rotate-2 max-w-sm animate-card-float">
-            <h1 class="text-3xl text-[#FF7043] font-bold mb-2 font-['Zcool_KuaiLe']">🎂 Surprise~</h1>
-            <p class="text-gray-500 text-lg font-bold">先把灯关掉吧 :)</p>
+            <h1 class="text-3xl text-[#FF7043] font-bold mb-2 font-['Zcool_KuaiLe']">🎂 生日惊喜</h1>
+            <p class="text-gray-500 text-lg font-bold">请帮我把灯关掉吧！</p>
         </div>
         
         <!-- 开关微动 -->
@@ -492,7 +497,7 @@
         <!-- 提示文字 -->
         <div class="absolute top-[10%] text-white text-2xl font-bold tracking-widest transition-opacity duration-500 z-50 text-center px-4"
              :class="{'opacity-100 animate-pulse': phase === 'dark', 'opacity-0': phase !== 'dark'}">
-            许个愿望，然后按住屏幕吹灭蜡烛吧~
+            许个愿望，长按吹气 💨
         </div>
 
         <!-- HAPPY彩带 (Z: 35) -->
@@ -519,7 +524,7 @@
                 @touchend="stopBlowing"
                 @contextmenu.prevent>
                 
-                <!-- 修改：添加 :style 控制 animationPlayState，实现点击时暂停动画 -->
+                <!-- 点击时暂停微动动画 -->
                 <div class="relative w-full h-full flex justify-center items-end"
                      :class="{'animate-cake-float': phase !== 'light'}"
                      :style="{ animationPlayState: isBlowing ? 'paused' : 'running' }">
@@ -577,11 +582,8 @@
             <div class="animate-[popIn_3s_cubic-bezier(0.175,0.885,0.32,1.275)_forwards]">
                 <!-- 文字微动动画 -->
                 <h1 class="cute-font text-6xl md:text-8xl text-center leading-tight pointer-events-none drop-shadow-md animate-text-float">
-                    JR.<br>生日快乐！<br>
+                    JR.<br>生日快乐！
                 </h1>
-                <h2 class="cute-font text-2xl md:text-2xl text-center leading-tight pointer-events-none drop-shadow-md animate-text-float">
-                    每天都要是开心的一天哦！~
-                </h2>
             </div>
         </div>
 
