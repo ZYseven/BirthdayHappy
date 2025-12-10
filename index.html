@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>祝JR.生日快乐！</title>
+    
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Zcool+KuaiLe&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 全局与背景 --- */
+        body {
+            font-family: 'Patrick Hand', 'Zcool KuaiLe', cursive;
+            overflow: hidden;
+            touch-action: none;
+            background-color: #FFFDE7;
+            background-image: radial-gradient(#FFEBEE 20%, transparent 20%), radial-gradient(#E3F2FD 20%, transparent 20%);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+            transition: background-color 1.5s ease-in-out;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .dark-mode-bg {
+            background-color: #121212 !important;
+            background-image: none !important;
+        }
+
+        /* --- 背景装饰 --- */
+        .bg-pet {
+            position: absolute;
+            font-size: 3.5rem; 
+            opacity: 0.12;
+            pointer-events: none;
+            user-select: none;
+            filter: grayscale(0.2);
+            transition: opacity 1s;
+            z-index: 1; 
+        }
+
+        /* --- 星星闪烁特效 --- */
+        .star-light {
+            position: absolute;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            opacity: 0;
+            z-index: 2; 
+            animation: twinkle 2s infinite ease-in-out;
+            filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
+        }
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: scale(0.8) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.1) rotate(15deg); }
+            100% { opacity: 0.3; transform: scale(0.8) rotate(0deg); }
+        }
+
+        /* --- 微动动画 --- */
+        
+        /* 1. 文字微动 */
+        @keyframes floatText {
+            0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+            50% { transform: translateY(-10px) scale(1.02) rotate(1deg); }
+        }
+        .animate-text-float {
+            animation: floatText 4s ease-in-out infinite;
+        }
+
+        /* 2. 蛋糕微动 */
+        @keyframes floatCake {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); } 
+        }
+        .animate-cake-float {
+            animation: floatCake 6s ease-in-out infinite;
+        }
+
+        /* 3. 第一页卡片微动 */
+        @keyframes floatCard {
+            0%, 100% { transform: rotate(2deg) translateY(0); }
+            50% { transform: rotate(2deg) translateY(-10px); }
+        }
+        .animate-card-float {
+            animation: floatCard 3s ease-in-out infinite;
+        }
+
+        /* 4. 开关微动 */
+        @keyframes pulseSwitch {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .animate-switch-pulse {
+            animation: pulseSwitch 2s ease-in-out infinite;
+        }
+
+
+        /* --- HAPPY彩带 --- */
+        .bunting-container {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            z-index: 35;
+            pointer-events: none;
+        }
+        .bunting-string {
+            position: absolute;
+            top: 10px;
+            width: 80%;
+            height: 40px;
+            border-top: 2px solid rgba(0,0,0,0.2);
+            border-radius: 50% / 100% 100% 0 0;
+            transform: rotate(180deg); 
+        }
+        .flag {
+            width: 40px;
+            height: 50px;
+            background: #FFAB91;
+            margin: 0 5px;
+            position: relative;
+            top: 10px;
+            clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 5px;
+            color: white;
+            font-size: 1.5rem;
+            font-family: 'Patrick Hand', cursive;
+            transform-origin: top center;
+            animation: swing 3s infinite ease-in-out alternate;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        @keyframes swing {
+            0% { transform: rotate(-5deg); }
+            100% { transform: rotate(5deg); }
+        }
+
+        /* --- 蛋糕容器 --- */
+        .cake-wrapper {
+            position: relative;
+            width: 340px;
+            height: 380px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 20px;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 30; 
+            pointer-events: none;
+        }
+        
+        .cake-layer, .candle-container, .luxury-plate {
+            pointer-events: auto; 
+            cursor: pointer;
+        }
+
+        /* 通用蛋糕层 */
+        .cake-layer {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 20px;
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.05), 5px 10px 20px rgba(0,0,0,0.1);
+        }
+        .cake-layer::before { /* 顶面高光 */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 25px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 20px 20px 50% 50% / 12px 12px 8px 8px;
+            z-index: 1;
+        }
+
+        /* 蛋糕各层颜色与尺寸 */
+        .cl-bottom {
+            width: 300px;
+            height: 110px;
+            background: #FCE4EC;
+            bottom: 20px;
+            z-index: 10;
+            border-bottom: 8px solid #F8BBD0;
+        }
+        .cl-middle {
+            width: 240px;
+            height: 100px;
+            background: #FFF9C4;
+            bottom: 110px;
+            z-index: 20;
+            border-bottom: 8px solid #FFF176;
+        }
+        .cl-top {
+            width: 180px;
+            height: 90px;
+            background: #FFFFFF;
+            bottom: 190px;
+            z-index: 30;
+            border-bottom: 8px solid #F5F5F5;
+        }
+
+        /* 淋面 */
+        .drip-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .drip {
+            position: absolute;
+            top: 0;
+            background: #FF80AB;
+            width: 100%;
+            height: 25px;
+            border-radius: 20px 20px 10px 10px;
+        }
+        .drip::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 10px;
+            width: 15px;
+            height: 25px;
+            background: #FF80AB;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 30px 5px 0 #FF80AB, 60px -2px 0 #FF80AB, 90px 8px 0 #FF80AB;
+        }
+
+        /* 水果 */
+        .fruit {
+            position: absolute;
+            z-index: 5;
+            filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.15));
+            transform-origin: center center; 
+        }
+        .strawberry {
+            width: 24px;
+            height: 30px;
+            background: #D32F2F;
+            border-radius: 5px 5px 12px 12px;
+        }
+        .strawberry::before { content: ''; position: absolute; top: -3px; left: -2px; width: 28px; height: 9px; background: radial-gradient(circle, #4CAF50 40%, transparent 50%); background-size: 10px 10px; }
+        .strawberry::after { content: ''; position: absolute; top: 6px; left: 6px; width: 2px; height: 2px; background: #FFCDD2; box-shadow: 6px 6px 0 #FFCDD2, -3px 10px 0 #FFCDD2; opacity: 0.7; }
+        .blueberry {
+            width: 18px;
+            height: 18px;
+            background: #3F51B5;
+            border-radius: 50%;
+        }
+        .blueberry::after { content: ''; position: absolute; top: 3px; left: 4px; width: 5px; height: 5px; border: 1px solid rgba(255,255,255,0.4); border-radius: 50%; }
+        .cream-dollop {
+            width: 22px;
+            height: 22px;
+            background: #FFF;
+            border-radius: 50% 50% 5px 5px;
+            transform: rotate(45deg);
+            box-shadow: inset -2px -2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* 蜡烛 */
+        .candle-container {
+            position: absolute;
+            bottom: 270px; 
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 35; 
+            align-items: flex-end;
+            pointer-events: auto;
+        }
+        .candle-base {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 8px;
+            background: #FFF;
+            border-radius: 50%;
+            z-index: 31;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .candle {
+            width: 10px;
+            height: 40px;
+            background: repeating-linear-gradient(-45deg, #FF8A80, #FF8A80 5px, #FF5252 5px, #FF5252 10px);
+            border-radius: 3px;
+            position: relative;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+        .flame {
+            width: 12px;
+            height: 22px;
+            background: radial-gradient(ellipse at bottom, #FFFF00 0%, #FFA000 50%, #FF5722 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: burn 0.8s infinite alternate;
+            z-index: 50;
+        }
+        @keyframes burn {
+            0% { transform: translateX(-50%) scale(1) rotate(-2deg); opacity: 0.9; }
+            100% { transform: translateX(-50%) scale(1.1) rotate(2deg); opacity: 1; }
+        }
+        .flame.blowing {
+            animation: blow 0.1s infinite alternate;
+            opacity: 0.6;
+        }
+        @keyframes blow {
+            0% { transform: translateX(-50%) skewX(10deg) rotate(5deg) scale(0.9); }
+            100% { transform: translateX(-50%) skewX(20deg) rotate(10deg) scale(0.8); }
+        }
+
+        .luxury-plate {
+            position: absolute;
+            bottom: 0;
+            width: 360px;
+            height: 25px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 5px 0 #E0E0E0, 0 15px 30px rgba(0,0,0,0.2);
+            z-index: 5;
+        }
+
+        /* 气球 */
+        .balloon-container {
+            position: absolute;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .balloon-wrapper {
+            position: absolute;
+            bottom: -150px;
+            width: 80px; 
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            pointer-events: auto;
+            touch-action: manipulation;
+        }
+        .balloon {
+            width: 50px;
+            height: 65px;
+            background-color: currentColor;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: inset -5px -5px 15px rgba(0,0,0,0.15);
+            transform-origin: center bottom;
+        }
+        .balloon::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 12px;
+            width: 12px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: rotate(45deg);
+        }
+        .balloon-rope {
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            width: 2px;
+            height: 35px;
+            background: rgba(0,0,0,0.2);
+            transform-origin: top center;
+        }
+
+        @keyframes floatUpAndAway {
+            0% { transform: translateY(0); opacity: 0.9; }
+            100% { transform: translateY(-130vh); opacity: 1; }
+        }
+
+        .cute-font {
+            font-family: 'Zcool KuaiLe', cursive;
+            color: #fff;
+            text-shadow: 0px 0px 10px #FF4081, 0px 0px 20px #FF4081;
+            letter-spacing: 4px;
+            z-index: 40; 
+            position: relative;
+            pointer-events: none; 
+        }
+
+        #darkness-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 15%, rgba(0,0,0,0.9) 60%, #000 100%);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s;
+            z-index: 15; 
+        }
+    </style>
+</head>
+<body :class="{'dark-mode-bg': phase === 'dark'}">
+
+<div id="app" class="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center">
+
+    <!-- 0. 背景装饰 (Z: 1) -->
+    <div v-if="phase !== 'dark'" class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div v-for="(pet, i) in bgPets" :key="i" class="bg-pet"
+             :style="{ 
+                 left: pet.x + '%', 
+                 top: pet.y + '%', 
+                 transform: `rotate(${pet.rotation}deg)`,
+                 animation: `floatPet ${pet.duration}s infinite linear`
+             }">
+            {{ pet.emoji }}
+        </div>
+    </div>
+
+    <!-- 背景星星闪烁 (Z: 2) -->
+    <div v-if="phase === 'celebrate'" class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div v-for="(light, i) in lights" :key="i" class="star-light"
+             :style="{
+                 left: light.x + '%',
+                 top: light.y + '%',
+                 width: light.size + 'px',
+                 height: light.size + 'px',
+                 backgroundColor: light.color,
+                 animationDelay: light.delay + 's'
+             }">
+        </div>
+    </div>
+
+    <!-- 1. 气球层 (Z: 100) -->
+    <div v-if="phase === 'celebrate'" class="balloon-container">
+        <div v-for="b in balloons" :key="b.id" 
+             class="balloon-wrapper"
+             :style="{ 
+                 left: b.left + '%', 
+                 color: b.color,
+                 transform: `scale(${b.scale})`,
+                 animation: `floatUpAndAway ${b.speed}s linear forwards`
+             }"
+             @click.stop="popBalloon(b.id, $event)"
+             @mousedown.stop="popBalloon(b.id, $event)"
+             @touchstart.stop="popBalloon(b.id, $event)"
+             @animationend="removeBalloon(b.id)">
+            <div class="balloon" :style="{ transform: `rotate(${b.tilt}deg)` }">
+                <div class="balloon-rope" :style="{ transform: `translateX(-50%) rotate(${b.ropeAngle}deg)` }"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 黑暗遮罩 (Z: 15) -->
+    <div id="darkness-overlay" :style="{ opacity: phase === 'dark' ? 1 : 0 }"></div>
+
+    <!-- 3. 开关界面 (Z: 50) -->
+    <div v-if="phase === 'light'" class="z-50 flex flex-col items-center transition-all duration-500"
+         :class="{'opacity-0 scale-90': fadeOutLight}">
+        <!-- 第一页卡片微动 -->
+        <div class="bg-white p-8 rounded-[30px] shadow-[8px_8px_0_#FFCCBC] border-4 border-[#FFAB91] mb-12 text-center transform rotate-2 max-w-sm animate-card-float">
+            <h1 class="text-3xl text-[#FF7043] font-bold mb-2 font-['Zcool_KuaiLe']">🎂 Surprise~</h1>
+            <p class="text-gray-500 text-lg font-bold">先把灯关掉吧 :)</p>
+        </div>
+        
+        <!-- 开关微动 -->
+        <div @click="turnOffLight" class="cursor-pointer transition-transform active:scale-95 group tap-highlight-transparent animate-switch-pulse">
+             <div class="w-24 h-36 bg-gray-100 rounded-2xl border-4 border-gray-300 shadow-xl flex items-center justify-center relative">
+                 <div class="absolute top-2 w-2 h-2 rounded-full bg-gray-300"></div>
+                 <div class="absolute bottom-2 w-2 h-2 rounded-full bg-gray-300"></div>
+                 <div class="w-12 h-20 bg-white border-2 border-gray-200 rounded-lg shadow-[0_4px_0_#E0E0E0] relative top-[-4px] group-active:top-[0px] group-active:shadow-none transition-all"></div>
+             </div>
+        </div>
+    </div>
+
+    <!-- 4. 蛋糕与文字场景 -->
+    <div class="absolute z-30 flex flex-col items-center justify-center w-full h-full transition-all duration-1000"
+         :class="{'opacity-0 pointer-events-none': phase === 'light'}">
+        
+        <!-- 提示文字 -->
+        <div class="absolute top-[10%] text-white text-2xl font-bold tracking-widest transition-opacity duration-500 z-50 text-center px-4"
+             :class="{'opacity-100 animate-pulse': phase === 'dark', 'opacity-0': phase !== 'dark'}">
+            许个愿望，然后按住屏幕吹灭蜡烛吧~
+        </div>
+
+        <!-- HAPPY彩带 (Z: 35) -->
+        <div v-if="phase === 'celebrate'" class="bunting-container animate-[popIn_1.5s_ease-out_forwards]">
+            <!-- 模拟绳子 -->
+            <div class="bunting-string"></div>
+            <!-- 彩旗 -->
+            <div class="flex items-start pt-6 space-x-1" style="transform: rotate(2deg);">
+                <div class="flag" style="background: #EF5350; animation-delay: 0s;">H</div>
+                <div class="flag" style="background: #FFA726; animation-delay: 0.2s;">A</div>
+                <div class="flag" style="background: #FFEE58; color: #E65100; animation-delay: 0.4s;">P</div>
+                <div class="flag" style="background: #66BB6A; animation-delay: 0.6s;">P</div>
+                <div class="flag" style="background: #42A5F5; animation-delay: 0.8s;">Y</div>
+            </div>
+        </div>
+
+        <div class="transform scale-[0.85] md:scale-100 transition-transform duration-500 relative z-30 flex justify-center items-end">
+            <!-- 蛋糕主体 (Z: 30) -->
+            <div class="cake-wrapper transform transition-transform duration-700 select-none"
+                :class="{'scale-100': phase === 'dark', 'scale-110 translate-y-20': phase === 'celebrate'}"
+                @mousedown="startBlowing" 
+                @touchstart.prevent="startBlowing" 
+                @mouseup="stopBlowing" 
+                @touchend="stopBlowing"
+                @contextmenu.prevent>
+                
+                <!-- 修改：添加 :style 控制 animationPlayState，实现点击时暂停动画 -->
+                <div class="relative w-full h-full flex justify-center items-end"
+                     :class="{'animate-cake-float': phase !== 'light'}"
+                     :style="{ animationPlayState: isBlowing ? 'paused' : 'running' }">
+                     
+                    <!-- 蜡烛 -->
+                    <div class="candle-container">
+                        <div v-for="i in 5" :key="i" class="relative flex flex-col items-center">
+                            <div v-if="!candlesOut" class="flame" :class="{ 'blowing': isBlowing }" 
+                                :style="{ animationDelay: (i * 0.1) + 's' }"></div>
+                            <div v-if="candlesOut" class="absolute -top-4 w-2 h-2 bg-gray-400 rounded-full opacity-0 animate-[smokeUp_1s_ease-out_forwards]" 
+                                :style="{ animationDelay: (i * 0.1) + 's' }"></div>
+                            <div class="candle"></div>
+                            <div class="candle-base"></div>
+                        </div>
+                    </div>
+
+                    <!-- 顶层蛋糕 -->
+                    <div class="cake-layer cl-top">
+                        <div class="drip-container">
+                            <div class="drip" style="background: #F48FB1;"></div> 
+                        </div>
+                        <div class="fruit strawberry" style="top: -14px; left: 34px; transform: rotate(-6deg) scale(0.9); z-index: 6;"></div>
+                        <div class="fruit strawberry" style="top: -14px; right: 34px; transform: rotate(6deg) scale(0.9); z-index: 6;"></div>
+                        <div class="fruit blueberry" style="top: 6px; left: 56px; z-index: 7;"></div>
+                        <div class="fruit blueberry" style="top: 6px; right: 56px; z-index: 7;"></div>
+                        <div class="fruit cream-dollop" style="top: 2px; left: 50%; transform: translateX(-50%) rotate(45deg); z-index: 8;"></div>
+                    </div>
+
+                    <!-- 中层蛋糕 -->
+                    <div class="cake-layer cl-middle">
+                        <div class="fruit strawberry" style="top: -12px; left: 5px; transform: rotate(-20deg); z-index: 25;"></div>
+                        <div class="fruit blueberry" style="top: 15px; left: 18px; z-index: 26;"></div>
+                        <div class="fruit cream-dollop" style="top: -5px; right: 8px; z-index: 25;"></div>
+                        <div class="fruit blueberry" style="top: 18px; right: 18px; z-index: 26;"></div>
+                        <div class="fruit blueberry" style="top: 60px; left: 70px;"></div>
+                        <div class="fruit blueberry" style="top: 65px; right: 80px;"></div>
+                    </div>
+
+                    <!-- 底层蛋糕 -->
+                    <div class="cake-layer cl-bottom">
+                        <div class="fruit strawberry" style="top: -12px; left: 5px; transform: rotate(-30deg) scale(1.1); z-index: 15;"></div>
+                        <div class="fruit strawberry" style="top: -12px; right: 5px; transform: rotate(30deg) scale(1.1); z-index: 15;"></div>
+                        <div class="fruit cream-dollop" style="top: 65px; left: 90px;"></div>
+                        <div class="fruit cream-dollop" style="top: 65px; right: 90px;"></div>
+                        <div class="fruit blueberry" style="top: 75px; left: 50%; transform: translateX(-50%);"></div>
+                    </div>
+
+                    <div class="luxury-plate"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 庆祝文字 (Z: 40) -->
+        <div v-if="phase === 'celebrate'" class="absolute inset-0 flex flex-col items-center justify-start pt-24 md:pt-28 pointer-events-none z-40">
+            <div class="animate-[popIn_3s_cubic-bezier(0.175,0.885,0.32,1.275)_forwards]">
+                <!-- 文字微动动画 -->
+                <h1 class="cute-font text-6xl md:text-8xl text-center leading-tight pointer-events-none drop-shadow-md animate-text-float">
+                    JR.<br>生日快乐！<br>
+                </h1>
+                <h2 class="cute-font text-2xl md:text-2xl text-center leading-tight pointer-events-none drop-shadow-md animate-text-float">
+                    每天都要是开心的一天哦！~
+                </h2>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    const { createApp, ref, onMounted, onUnmounted } = Vue;
+
+    createApp({
+        setup() {
+            const phase = ref('light'); 
+            const fadeOutLight = ref(false);
+            const isBlowing = ref(false);
+            const blowProgress = ref(0);
+            const candlesOut = ref(false);
+            const bgPets = ref([]);
+            const balloons = ref([]);
+            const lights = ref([]); // 彩灯数据
+            let blowInterval = null;
+            let balloonGenerator = null;
+
+            onMounted(() => {
+                // 初始化背景emoji
+                const pets = ['🐶', '🐱', '🐰', '🐾', '🦴', '🧸', '🐣'];
+                const rows = 4;
+                const cols = 5;
+                const rowSize = 100 / rows;
+                const colSize = 100 / cols;
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        bgPets.value.push({
+                            emoji: pets[Math.floor(Math.random() * pets.length)],
+                            x: (c * colSize) + (Math.random() * (colSize - 10) + 5), 
+                            y: (r * rowSize) + (Math.random() * (rowSize - 10) + 5),
+                            rotation: Math.random() * 360, 
+                            duration: 30 + Math.random() * 20
+                        });
+                    }
+                }
+
+                // 初始化星星彩灯 (修改：增大尺寸，增加对比度高的颜色)
+                const lightColors = ['#FFD700', '#FF4081', '#00B0FF', '#76FF03', '#FF6E40', '#E040FB'];
+                for(let i=0; i<30; i++) {
+                    lights.value.push({
+                        x: Math.random() * 100,
+                        y: Math.random() * 100,
+                        size: 15 + Math.random() * 15, // 修改：尺寸变大到 15px - 30px
+                        color: lightColors[Math.floor(Math.random() * lightColors.length)],
+                        delay: Math.random() * 3 
+                    });
+                }
+            });
+
+            onUnmounted(() => {
+                if (balloonGenerator) clearInterval(balloonGenerator);
+            });
+
+            const startBalloonGenerator = () => {
+                const colors = ['#FF8A80', '#FFD180', '#FFFF8D', '#CCFF90', '#A7FFEB', '#80D8FF', '#B388FF'];
+                let idCounter = 0;
+
+                balloonGenerator = setInterval(() => {
+                    if (balloons.value.length > 15) return;
+
+                    balloons.value.push({
+                        id: idCounter++,
+                        left: Math.random() * 90 + 5,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        speed: 18 + Math.random() * 12, 
+                        scale: 0.8 + Math.random() * 0.4, 
+                        tilt: Math.random() * 20 - 10, 
+                        ropeAngle: Math.random() * 30 - 15 
+                    });
+                }, 1000); 
+            };
+
+            const removeBalloon = (id) => {
+                const index = balloons.value.findIndex(b => b.id === id);
+                if (index !== -1) balloons.value.splice(index, 1);
+            };
+
+            const popBalloon = (id, event) => {
+                const index = balloons.value.findIndex(b => b.id === id);
+                if (index !== -1) {
+                    balloons.value.splice(index, 1);
+                    
+                    let clientX = event.clientX;
+                    let clientY = event.clientY;
+                    
+                    if (event.touches && event.touches.length > 0) {
+                        clientX = event.touches[0].clientX;
+                        clientY = event.touches[0].clientY;
+                    } else if (event.changedTouches && event.changedTouches.length > 0) {
+                        clientX = event.changedTouches[0].clientX;
+                        clientY = event.changedTouches[0].clientY;
+                    }
+
+                    if (clientX && clientY) {
+                        confetti({
+                            particleCount: 12,
+                            spread: 30,
+                            origin: { x: clientX / window.innerWidth, y: clientY / window.innerHeight },
+                            colors: ['#fff', '#FFD180', '#80D8FF']
+                        });
+                    }
+                }
+            };
+
+            const turnOffLight = () => {
+                fadeOutLight.value = true;
+                setTimeout(() => {
+                    phase.value = 'dark';
+                }, 500);
+            };
+
+            const startBlowing = () => {
+                if (phase.value !== 'dark' || candlesOut.value) return;
+                isBlowing.value = true;
+                
+                blowInterval = setInterval(() => {
+                    blowProgress.value += 2;
+                    if (blowProgress.value >= 100) {
+                        finishBlowing();
+                    }
+                }, 30);
+            };
+
+            const stopBlowing = () => {
+                isBlowing.value = false;
+                clearInterval(blowInterval);
+                if (!candlesOut.value) {
+                    const reduce = setInterval(() => {
+                        blowProgress.value -= 5;
+                        if (blowProgress.value <= 0 || isBlowing.value) {
+                            blowProgress.value = 0;
+                            clearInterval(reduce);
+                        }
+                    }, 20);
+                }
+            };
+
+            const finishBlowing = () => {
+                clearInterval(blowInterval);
+                candlesOut.value = true;
+                isBlowing.value = false;
+                
+                setTimeout(() => {
+                    phase.value = 'celebrate';
+                    startBalloonGenerator(); 
+                    fireConfetti();
+                }, 1000);
+            };
+
+            const fireConfetti = () => {
+                const duration = 3000;
+                const end = Date.now() + duration;
+                (function frame() {
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#FF8A80', '#FFD180', '#80D8FF']
+                    });
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#FF8A80', '#FFD180', '#80D8FF']
+                    });
+                    if (Date.now() < end) requestAnimationFrame(frame);
+                }());
+            };
+
+            return {
+                phase, fadeOutLight, isBlowing, blowProgress, candlesOut, bgPets, balloons, lights,
+                turnOffLight, startBlowing, stopBlowing, popBalloon, removeBalloon
+            };
+        }
+    }).mount('#app');
+</script>
+
+<style>
+@keyframes smokeUp {
+    0% { opacity: 0.8; transform: translate(-50%, 0) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -40px) scale(2.5); }
+}
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+}
+</style>
+
+</body>
+</html>
